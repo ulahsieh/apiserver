@@ -1,0 +1,9 @@
+server:
+  port: 3000
+
+database:
+  host: "10.90.1.207"
+  port: 1521
+  user: "logminer"
+  password: "logminer"
+  sid: "emesHY"
