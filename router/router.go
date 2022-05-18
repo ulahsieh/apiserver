@@ -14,6 +14,7 @@ func NewRoutes(db *sql.DB) *gin.Engine {
 	repo := controller.NewRepo(db)
 
 	router.GET("/api/convergence/getkpsn/:csn", repo.GetKPSN)
+	router.GET("/api/convergence/getreverse/:csn", repo.GetReverse)
 
 	return router
 

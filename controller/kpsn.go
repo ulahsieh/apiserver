@@ -1,23 +1,12 @@
 package controller
 
 import (
-	"database/sql"
 	"net/http"
 
 	"apiserver/models"
 
 	"github.com/gin-gonic/gin"
 )
-
-type Repo struct {
-	db *sql.DB
-}
-
-func NewRepo(db *sql.DB) *Repo {
-	return &Repo{
-		db: db,
-	}
-}
 
 func (r *Repo) GetKPSN(c *gin.Context) {
 	csn := c.Param("csn")

@@ -14,6 +14,7 @@ import (
 	"apiserver/models"
 	"apiserver/router"
 
+	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -25,8 +26,10 @@ func init() {
 	// set log level
 	if debugMode {
 		log.SetLevel(log.DebugLevel)
+		gin.SetMode(gin.DebugMode)
 	} else {
 		log.SetLevel(log.InfoLevel)
+		gin.SetMode(gin.ReleaseMode)
 	}
 	format := &log.TextFormatter{
 		TimestampFormat: "2006-01-02 15:04:05",
@@ -52,12 +55,13 @@ func main() {
 		Handler: router,
 	}
 
+	// gracefully shutdown the server & database connection
+	go handleShutdown(db, server)
+
+	// run the http server
 	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("listen: %v\n", err)
 	}
-
-	go handleShutdown(db, server)
-
 }
 
 func handleShutdown(db *sql.DB, srv *http.Server) {

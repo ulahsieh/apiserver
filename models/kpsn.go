@@ -1,26 +1,26 @@
 package models
 
 import (
-	"database/sql"
+	"encoding/json"
 	"fmt"
 
 	_ "github.com/godror/godror"
 	log "github.com/sirupsen/logrus"
 )
 
-type Repo struct {
-	db *sql.DB
-}
-
-func NewRepo(db *sql.DB) *Repo {
-	return &Repo{
-		db: db,
-	}
+type Kpsn struct {
+	KPNO  string `json:"KEY_PART_NO"`
+	PRE   string `json:"PRE_KPSN"`
+	THIS  string `json:"THIS_KPSN"`
+	DC    string `json:"Datecode"`
+	LC    string `json:"Lotcode"`
+	KPQTY string `json:"KP_QTY"`
+	KPLOC string `json:"KP_LOCATION"`
 }
 
 func (r *Repo) Find(csn string) (response interface{}, err error) {
 
-	sqlComand := fmt.Sprintf("SELECT DISTINCT SERIAL_NUMBER,PRE_KPSN,THIS_KPSN,DATECODE,LOTCODE from EMESC.VP_ASSY_SUMMARY_SMT where serial_number = '%s'", csn)
+	sqlComand := fmt.Sprintf("select KEY_PART_NO,PRE_KPSN,THIS_KPSN,DATECODE,LOTCODE,KP_QTY,KP_LOCATION from EMESC.VP_ASSY_SUMMARY_SMT where serial_number =  '%s' and (key_part_no like '3B%%' OR key_part_no like '3V%%' OR key_part_no like '3G%%' OR key_part_no like '71%%') order by KEY_PART_NO", csn)
 
 	rows, err := r.db.Query(sqlComand)
 	if err != nil {
@@ -29,18 +29,20 @@ func (r *Repo) Find(csn string) (response interface{}, err error) {
 	}
 	defer rows.Close()
 
-	var sn, pre, this, dc, lc string
-	var result []map[string]interface{}
-	var eachrow map[string]interface{}
-	eachrow = make(map[string]interface{})
+	var kpsns []*Kpsn
 	for rows.Next() {
-		rows.Scan(&sn, &pre, &this, &dc, &lc)
-		eachrow["SERIAL_NUMBER"] = sn
-		eachrow["PRE_KPSN"] = pre
-		eachrow["THIS_KPSN"] = this
-		eachrow["DATECODE"] = dc
-		eachrow["LOTCODE"] = lc
-		result = append(result, eachrow)
+		k := new(Kpsn)
+		rows.Scan(&k.KPNO, &k.PRE, &k.THIS, &k.DC, &k.LC, &k.KPQTY, &k.KPLOC)
+		kpsns = append(kpsns, k)
+	}
+	jsonStr, _ := json.Marshal(&kpsns)
+
+	var result []Kpsn
+	// var result []map[string]interface{}
+
+	if err := json.Unmarshal([]byte(jsonStr), &result); err != nil {
+		log.Debug("Can't parse the json string")
+		return nil, nil
 	}
 
 	if len(result) != 0 {
